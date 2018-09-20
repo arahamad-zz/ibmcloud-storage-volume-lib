@@ -79,6 +79,22 @@ Once session is ready the user can all any method/interface which are part of `i
 ## How to build the sample code:
 To build the sample code, just need to follow following commands 
 
+### Step 1:
+Set the GOPATH as per your system and directory lets say `/home/user/test`   and create a sub directory under this by using following command 
+
+```
+$mkdir -p src/github.com/arahamad
+```
+
+### Step 2:
+Change the directory to `src/github.com/arahamad`  nad check out the code 
+```
+git clone https://github.com/arahamad/ibmcloud-storage-volume-lib.git
+```
+
+### Step 3: 
+Change the directory `$cd ibmcloud-storage-volume-lib`  and run the following command to build the sample code
+
 ```
 $make deps
 $make build
