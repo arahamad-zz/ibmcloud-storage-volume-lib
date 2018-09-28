@@ -11,30 +11,23 @@
 package softlayer_block
 
 import (
-	"github.com/arahamad/ibmcloud-storage-volume-lib/config"
-	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/backend"
+	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/common"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
-	"github.com/uber-go/zap"
 )
 
 const (
-  // Softlayer storage provider
-  SoftLayer = provider.VolumeProvider("SOFTLAYER-BLOCK")
-  SoftLayerEndurance = provider.VolumeProviderType("SOFTLAYER_ENDURANCE")
-  SoftLayerPerformance = provider.VolumeProviderType("SOFTLAYER_PERFORMANCE")
+	// Softlayer storage provider
+	SoftLayer            = provider.VolumeProvider("SOFTLAYER-BLOCK")
+	SoftLayerEndurance   = provider.VolumeProviderType("SOFTLAYER_ENDURANCE")
+	SoftLayerPerformance = provider.VolumeProviderType("SOFTLAYER_PERFORMANCE")
 
-  VolumeTypeBlock = provider.VolumeType("VOLUME-Block")
+	VolumeTypeBlock = provider.VolumeType("VOLUME-Block")
 )
 
 // SLBlockSession implements lib.Session
 type SLBlockSession struct {
-	slAccountID        int
-	url                string
-	backend            backend.Session
-	logger             zap.Logger
-	config             *config.SoftlayerConfig
-	contextCredentials provider.ContextCredentials
+	common.SLSession
 }
 
 // Close at present does nothing
@@ -49,5 +42,5 @@ func (sls *SLBlockSession) GetProviderDisplayName() provider.VolumeProvider {
 }
 
 func (sls *SLBlockSession) ProviderName() provider.VolumeProvider {
-  return SoftLayer
+	return SoftLayer
 }

@@ -16,13 +16,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 
 	"github.com/IBM-Bluemix/bluemix-cli-sdk/common/rest"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/config"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/provider/auth"
-	"github.com/arahamad/ibmcloud-storage-volume-lib/provider/local"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/utils"
 )
@@ -155,7 +154,7 @@ func (r *tokenExchangeRequest) sendTokenExchangeRequest() (*tokenExchangeRespons
 	resp, err := r.client.Do(r.request, &successV, &errorV)
 
 	if err != nil {
-		r.logger.Error("IAM token exchange request failed", zap.Object("Response", resp), local.ZapError(err))
+		r.logger.Error("IAM token exchange request failed", zap.Reflect("Response", resp), zap.Error(err))
 
 		// TODO Handle timeout here?
 
@@ -176,7 +175,7 @@ func (r *tokenExchangeRequest) sendTokenExchangeRequest() (*tokenExchangeRespons
 			zap.Int("StatusCode", resp.StatusCode),
 			zap.String("ErrorMessage:", errorV.ErrorMessage),
 			zap.String("ErrorType:", errorV.ErrorType),
-			zap.Object("Error", errorV))
+			zap.Reflect("Error", errorV))
 
 		err := util.NewError("ErrorFailedTokenExchange",
 			"IAM token exchange request failed: "+errorV.ErrorMessage,
@@ -191,7 +190,7 @@ func (r *tokenExchangeRequest) sendTokenExchangeRequest() (*tokenExchangeRespons
 	}
 
 	r.logger.Error("Unexpected IAM token exchange response",
-		zap.Int("StatusCode", resp.StatusCode), zap.Object("Response", resp))
+		zap.Int("StatusCode", resp.StatusCode), zap.Reflect("Response", resp))
 
 	return nil,
 		util.NewError("ErrorUnclassified",

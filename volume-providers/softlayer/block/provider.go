@@ -16,12 +16,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/config"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/provider/local"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/auth"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/backend"
+	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/common"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
 	util "github.com/arahamad/ibmcloud-storage-volume-lib/lib/utils"
@@ -91,32 +92,35 @@ func (slp *SLBlockProvider) ContextCredentialsFactory(zone *string) (local.Conte
 func (slp *SLBlockProvider) OpenSession(ctx context.Context, contextCredentials provider.ContextCredentials, logger zap.Logger) (provider.Session, error) {
 
 	slSession := &SLBlockSession{
-		config: slp.config,
-		//tokenGenerator:     slp.tokenGenerator,
-		contextCredentials: contextCredentials,
-		logger:             logger,
+		common.SLSession{
+			Config: slp.config,
+			//tokenGenerator:     slp.tokenGenerator,
+			ContextCredentials: contextCredentials,
+			Logger:             logger,
+			VolumeType:         "ISCSI",
+		},
 	}
 
-	logger = logger.With(
-		zap.Object("authType", contextCredentials.AuthType),
-		zap.Object("timeout", slp.timeout),
+	logr := logger.With(
+		zap.Reflect("authType", contextCredentials.AuthType),
+		zap.Reflect("timeout", slp.timeout),
 	)
 
 	switch contextCredentials.AuthType {
 	case provider.IaaSAPIKey:
-		slSession.url = slp.config.SoftlayerEndpointURL
+		slSession.Url = slp.config.SoftlayerEndpointURL
 	case auth.IMSToken:
-		slSession.url = slp.config.SoftlayerIMSEndpointURL
+		slSession.Url = slp.config.SoftlayerIMSEndpointURL
 	default:
-		logger.Error("Unrecognised credentials")
+		logr.Error("Unrecognised credentials")
 		return nil, util.NewError("SLError-Session", "Unrecognised credentials")
 	}
 
-	logger = logger.With(
-		zap.String("url", slSession.url),
+	logr = logger.With(
+		zap.String("url", slSession.Url),
 	)
 
-	logger.Debug("Opening session to SoftLayer account")
+	logr.Debug("Opening session to SoftLayer account")
 
 	if slp.NewBackendSession == nil {
 		// Use a session backed by a real softlayer-go Session
@@ -125,30 +129,30 @@ func (slp *SLBlockProvider) OpenSession(ctx context.Context, contextCredentials 
 
 	httpClient, err := config.GeneralCAHttpClientWithTimeout(slp.timeout)
 	if err != nil {
-		logger.Error("A problem occurred creating a generic HTTP Client", local.ZapError(err))
+		logr.Error("A problem occurred creating a generic HTTP Client", local.ZapError(err))
 		// return nil, mapSLError(err, nil)  //: TODO: Neeed to map error with SL Error
 		return nil, util.NewError("SLError-Session", "Error while creating genneric HTTP client")
 	}
 
 	// TODO CAN WE WIRE ctx TO THROUGH TO SOFTLAYER CLIENT?
 
-	slSession.backend = slp.NewBackendSession(slSession.url, contextCredentials, httpClient, slp.config.SoftlayerAPIDebug, logger)
+	slSession.Backend = slp.NewBackendSession(slSession.Url, contextCredentials, httpClient, slp.config.SoftlayerAPIDebug, logger)
 
-	slAccount, err := slSession.backend.GetAccountService().Mask("id").GetObject()
+	slAccount, err := slSession.Backend.GetAccountService().Mask("id").GetObject()
 	if err != nil {
-		logger.Error("A problem occurred while retrieving the account ID", local.ZapError(err))
+		logr.Error("A problem occurred while retrieving the account ID", local.ZapError(err))
 		//return nil, mapSLError(err, nil) //: TODO: Neeed to map error with SL Error
 		return nil, util.NewError("SLError-ac", "Problem occurred while retrieving the account ID")
 	}
 
 	if slAccount.Id == nil {
-		logger.Error("The SoftLayer account ID was not found")
+		logr.Error("The SoftLayer account ID was not found")
 		return nil, util.NewError("SLError-ac", "Provider account ID not found")
 	}
-	logger = logger.With(zap.Int("slAccountID", *slAccount.Id))
-	slSession.slAccountID = *slAccount.Id
+	logr = logger.With(zap.Int("slAccountID", *slAccount.Id))
+	slSession.SLAccountID = *slAccount.Id
 
-	logger.Info("Opened session to SoftLayer account")
+	logr.Info("Opened session to SoftLayer account")
 
 	return slSession, nil
 }

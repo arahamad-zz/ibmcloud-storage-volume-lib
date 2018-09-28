@@ -19,7 +19,8 @@ import (
 
 	"github.com/softlayer/softlayer-go/sl"
 	"github.com/stretchr/testify/assert"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/config"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/provider/auth"
@@ -28,19 +29,21 @@ import (
 )
 
 var (
-	mux    *http.ServeMux
-	server *httptest.Server
-	logger zap.Logger
-	conf   config.Config
+	mux              *http.ServeMux
+	server           *httptest.Server
+	logger           *zap.Logger
+	conf             config.Config
+	lowPriority      zap.LevelEnablerFunc
+	consoleDebugging zapcore.WriteSyncer
 )
 
 func TestMain(m *testing.M) {
 	// Logging
-	logger = zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
-		zap.AddCaller(),
-		zap.DebugLevel,
-	)
+	lowPriority = zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl < zapcore.ErrorLevel
+	})
+	consoleDebugging = zapcore.Lock(os.Stdout)
+	logger = zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority), zap.AddCaller())
 
 	os.Exit(m.Run())
 }
@@ -53,7 +56,7 @@ func httpSetup() {
 
 func Test_ExchangeRefreshTokenForAccessToken_Success(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 	httpSetup()
@@ -75,7 +78,7 @@ func Test_ExchangeRefreshTokenForAccessToken_Success(t *testing.T) {
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeRefreshTokenForAccessToken("testrefreshtoken", logger)
+	r, err := tes.ExchangeRefreshTokenForAccessToken("testrefreshtoken", *logger)
 	assert.Nil(t, err)
 	if assert.NotNil(t, r) {
 		assert.Equal(t, (*r).Token, "at_success")
@@ -84,7 +87,7 @@ func Test_ExchangeRefreshTokenForAccessToken_Success(t *testing.T) {
 
 func Test_ExchangeRefreshTokenForAccessToken_FailedDuringRequest(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 
@@ -110,7 +113,7 @@ func Test_ExchangeRefreshTokenForAccessToken_FailedDuringRequest(t *testing.T) {
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeRefreshTokenForAccessToken("badrefreshtoken", logger)
+	r, err := tes.ExchangeRefreshTokenForAccessToken("badrefreshtoken", *logger)
 	assert.Nil(t, r)
 	if assert.NotNil(t, err) {
 		assert.Equal(t, "IAM token exchange request failed: did not work", err.Error())
@@ -120,7 +123,7 @@ func Test_ExchangeRefreshTokenForAccessToken_FailedDuringRequest(t *testing.T) {
 
 func Test_ExchangeRefreshTokenForAccessToken_FailedDuringRequest_no_message(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 
@@ -142,7 +145,7 @@ func Test_ExchangeRefreshTokenForAccessToken_FailedDuringRequest_no_message(t *t
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeRefreshTokenForAccessToken("badrefreshtoken", logger)
+	r, err := tes.ExchangeRefreshTokenForAccessToken("badrefreshtoken", *logger)
 	assert.Nil(t, r)
 	if assert.NotNil(t, err) {
 		assert.Equal(t, "Unexpected IAM token exchange response", err.Error())
@@ -152,7 +155,7 @@ func Test_ExchangeRefreshTokenForAccessToken_FailedDuringRequest_no_message(t *t
 
 func Test_ExchangeRefreshTokenForAccessToken_FailedNoIamUrl(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 
@@ -174,7 +177,7 @@ func Test_ExchangeRefreshTokenForAccessToken_FailedNoIamUrl(t *testing.T) {
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeRefreshTokenForAccessToken("testrefreshtoken", logger)
+	r, err := tes.ExchangeRefreshTokenForAccessToken("testrefreshtoken", *logger)
 	assert.Nil(t, r)
 
 	if assert.NotNil(t, err) {
@@ -187,7 +190,7 @@ func Test_ExchangeRefreshTokenForAccessToken_FailedNoIamUrl(t *testing.T) {
 
 func Test_ExchangeRefreshTokenForAccessToken_FailedRequesting_empty_body(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 
@@ -208,7 +211,7 @@ func Test_ExchangeRefreshTokenForAccessToken_FailedRequesting_empty_body(t *test
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeRefreshTokenForAccessToken("badrefreshtoken", logger)
+	r, err := tes.ExchangeRefreshTokenForAccessToken("badrefreshtoken", *logger)
 	assert.Nil(t, r)
 
 	if assert.NotNil(t, err) {
@@ -221,7 +224,7 @@ func Test_ExchangeRefreshTokenForAccessToken_FailedRequesting_empty_body(t *test
 
 func Test_ExchangeAccessTokenForIMSToken_Success(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 	httpSetup()
@@ -243,7 +246,7 @@ func Test_ExchangeAccessTokenForIMSToken_Success(t *testing.T) {
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "testaccesstoken"}, logger)
+	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "testaccesstoken"}, *logger)
 	assert.Nil(t, err)
 	if assert.NotNil(t, r) {
 		assert.Equal(t, (*r).UserID, 123)
@@ -253,7 +256,7 @@ func Test_ExchangeAccessTokenForIMSToken_Success(t *testing.T) {
 
 func Test_ExchangeAccessTokenForIMSToken_FailedDuringRequest(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 
@@ -279,7 +282,7 @@ func Test_ExchangeAccessTokenForIMSToken_FailedDuringRequest(t *testing.T) {
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "badaccesstoken"}, logger)
+	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "badaccesstoken"}, *logger)
 	assert.Nil(t, r)
 	if assert.NotNil(t, err) {
 		assert.Equal(t, "IAM token exchange request failed: did not work", err.Error())
@@ -291,7 +294,7 @@ func Test_ExchangeAccessTokenForIMSToken_FailedDuringRequest(t *testing.T) {
 
 func Test_ExchangeAccessTokenForIMSToken_FailedAccountLocked(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 
@@ -318,7 +321,7 @@ func Test_ExchangeAccessTokenForIMSToken_FailedAccountLocked(t *testing.T) {
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "badaccesstoken"}, logger)
+	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "badaccesstoken"}, *logger)
 	assert.Nil(t, r)
 	if assert.NotNil(t, err) {
 		assert.Equal(t, "Infrastructure account is temporarily locked", err.Error())
@@ -329,7 +332,7 @@ func Test_ExchangeAccessTokenForIMSToken_FailedAccountLocked(t *testing.T) {
 
 func Test_ExchangeAccessTokenForIMSToken_FailedDuringRequest_no_message(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 
@@ -351,7 +354,7 @@ func Test_ExchangeAccessTokenForIMSToken_FailedDuringRequest_no_message(t *testi
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "badrefreshtoken"}, logger)
+	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "badrefreshtoken"}, *logger)
 	assert.Nil(t, r)
 	if assert.NotNil(t, err) {
 		assert.Equal(t, "Unexpected IAM token exchange response", err.Error())
@@ -361,7 +364,7 @@ func Test_ExchangeAccessTokenForIMSToken_FailedDuringRequest_no_message(t *testi
 
 func Test_ExchangeAccessTokenForIMSToken_FailedRequesting_empty_body(t *testing.T) {
 	logger := zap.New(
-		zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
+		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 		zap.AddCaller(),
 	)
 
@@ -382,7 +385,7 @@ func Test_ExchangeAccessTokenForIMSToken_FailedRequesting_empty_body(t *testing.
 	tes, err := NewTokenExchangeService(&bluemixConf)
 	assert.NoError(t, err)
 
-	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "badrefreshtoken"}, logger)
+	r, err := tes.ExchangeAccessTokenForIMSToken(auth.AccessToken{Token: "badrefreshtoken"}, *logger)
 	assert.Nil(t, r)
 
 	if assert.NotNil(t, err) {
@@ -447,8 +450,7 @@ func Test_ExchangeIAMAPIKeyForAccessToken(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 
 			logger := zap.New(
-				zap.NewJSONEncoder(zap.RFC3339Formatter("ts")),
-				zap.DebugLevel,
+				zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()), consoleDebugging, lowPriority),
 				zap.AddCaller(),
 			)
 			httpSetup()
@@ -463,7 +465,7 @@ func Test_ExchangeIAMAPIKeyForAccessToken(t *testing.T) {
 			tes, err := NewTokenExchangeService(&bluemixConf)
 			assert.NoError(t, err)
 
-			r, actualError := tes.ExchangeIAMAPIKeyForAccessToken("apikey1", logger)
+			r, actualError := tes.ExchangeIAMAPIKeyForAccessToken("apikey1", *logger)
 			if testCase.expectedError == nil {
 				assert.NoError(t, actualError)
 				if assert.NotNil(t, r) {

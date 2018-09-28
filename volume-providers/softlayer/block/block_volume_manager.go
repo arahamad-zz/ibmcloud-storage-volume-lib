@@ -18,10 +18,10 @@ import (
 	"github.com/softlayer/softlayer-go/datatypes"
 	"github.com/softlayer/softlayer-go/sl"
 
-	"github.com/uber-go/zap"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/messages"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/utils"
+	"go.uber.org/zap"
 )
 
 // Type returns the underlying volume type
@@ -40,12 +40,11 @@ var (
 	VOLUME_DELETE_REASON = "deleted by ibm-volume-lib on behalf of user request"
 )
 
-
 //Creates Volume along with snapshot space allocation
 //TESTED: SAAS offering for endurance and Performance
 //TODO: test Enterprise volumeOrdering with endurance and performance
 func (sls *SLBlockSession) VolumeCreate(volumeRequest provider.Volume) (*provider.Volume, error) {
-	sls.logger.Info("Creating volume as per order request .... ", zap.Object("Volume", volumeRequest))
+	sls.Logger.Info("Creating volume as per order request .... ", zap.Reflect("Volume", volumeRequest))
 
 	//Hard coded required values for testing TODO: Remove them and pass the values as arguments for function
 	service_offering := "storage_as_a_service"
@@ -56,7 +55,7 @@ func (sls *SLBlockSession) VolumeCreate(volumeRequest provider.Volume) (*provide
 	if volumeRequest.ProviderType != "performance" && volumeRequest.ProviderType != "endurance" {
 		return nil, messages.GetUserError("E0012", nil)
 	}
-	datacenterID, dcError := utils.GetDataCenterID(sls.logger, sls.backend, volumeRequest.Az)
+	datacenterID, dcError := utils.GetDataCenterID(sls.Logger, sls.Backend, volumeRequest.Az)
 	if datacenterID == 0 || dcError != nil {
 		return nil, messages.GetUserError("E0001", dcError, volumeRequest.Az)
 	}
@@ -74,47 +73,47 @@ func (sls *SLBlockSession) VolumeCreate(volumeRequest provider.Volume) (*provide
 	order_type_is_saas, order_category_code := utils.GetOrderTypeAndCategory(service_offering, string(volumeRequest.ProviderType), volume_type)
 
 	//Step 3- Get the product package for the given category code
-	packageDetails, errPackage := utils.GetPackageDetails(sls.logger, sls.backend, "storage_as_a_service")
+	packageDetails, errPackage := utils.GetPackageDetails(sls.Logger, sls.Backend, "storage_as_a_service")
 	if errPackage != nil {
 		return nil, messages.GetUserError("E0017", errPackage, "storage_as_a_service")
 	}
 
-	sls.logger.Info("Preparing order for order request .... ", zap.Object("Volume", volumeRequest))
+	sls.Logger.Info("Preparing order for order request .... ", zap.Reflect("Volume", volumeRequest))
 	//Step 4- Based on the storage type and product package, build up the complex type
 	// and array of price codes to include in the order object
 	prices := []datatypes.Product_Item_Price{}
 	var complex_type string
 	base_type_name := "SoftLayer_Container_Product_Order_Network_"
 	if order_type_is_saas {
-			complex_type = base_type_name + "Storage_AsAService"
-			if volumeRequest.ProviderType == "performance" {
-					iops := utils.ToInt(*volumeRequest.Iops)
-					sls.logger.Info("new............. In PERFORMANCE")
-					prices = []datatypes.Product_Item_Price{
-						datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, order_category_code))},
-						datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, "storage_"+volume_type))},
-						datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSPerformanceSpacePrice(sls.logger, packageDetails, *volumeRequest.Capacity))},
-						datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSPerformanceIopsPrice(sls.logger, packageDetails, *volumeRequest.Capacity, iops))},
-					}
-
-					if volumeRequest.SnapshotSpace != nil && *volumeRequest.SnapshotSpace > 0 {
-						prices = append(prices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSSnapshotSpacePrice(sls.logger, packageDetails, *volumeRequest.SnapshotSpace, "", iops))})
-					}
-			} else { // volumeRequest.ProviderType == 'endurance'
-					sls.logger.Info("new............. In ENDURANCE")
-					prices = []datatypes.Product_Item_Price{
-						datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, order_category_code))},
-						datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, "storage_"+volume_type))},
-						datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSEnduranceSpacePrice(sls.logger, packageDetails, *volumeRequest.Capacity, *volumeRequest.Tier))},
-						datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSEnduranceTierPrice(sls.logger, packageDetails, *volumeRequest.Tier))},
-					}
-					if volumeRequest.SnapshotSpace != nil && *volumeRequest.SnapshotSpace > 0 {
-						prices = append(prices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSSnapshotSpacePrice(sls.logger, packageDetails, *volumeRequest.SnapshotSpace, *volumeRequest.Tier, 0))})
-					}
+		complex_type = base_type_name + "Storage_AsAService"
+		if volumeRequest.ProviderType == "performance" {
+			iops := utils.ToInt(*volumeRequest.Iops)
+			sls.Logger.Info("new............. In PERFORMANCE")
+			prices = []datatypes.Product_Item_Price{
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, order_category_code))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, "storage_"+volume_type))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSPerformanceSpacePrice(sls.Logger, packageDetails, *volumeRequest.Capacity))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSPerformanceIopsPrice(sls.Logger, packageDetails, *volumeRequest.Capacity, iops))},
 			}
+
+			if volumeRequest.SnapshotSpace != nil && *volumeRequest.SnapshotSpace > 0 {
+				prices = append(prices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSSnapshotSpacePrice(sls.Logger, packageDetails, *volumeRequest.SnapshotSpace, "", iops))})
+			}
+		} else { // volumeRequest.ProviderType == 'endurance'
+			sls.Logger.Info("new............. In ENDURANCE")
+			prices = []datatypes.Product_Item_Price{
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, order_category_code))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, "storage_"+volume_type))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSEnduranceSpacePrice(sls.Logger, packageDetails, *volumeRequest.Capacity, *volumeRequest.Tier))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSEnduranceTierPrice(sls.Logger, packageDetails, *volumeRequest.Tier))},
+			}
+			if volumeRequest.SnapshotSpace != nil && *volumeRequest.SnapshotSpace > 0 {
+				prices = append(prices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSSnapshotSpacePrice(sls.Logger, packageDetails, *volumeRequest.SnapshotSpace, *volumeRequest.Tier, 0))})
+			}
+		}
 	} else { // offering package is enterprise or performance TODO: TEST ELSE PART
 		if volumeRequest.ProviderType == "performance" {
-			sls.logger.Info("new............. In PLAIN PERFORMANCE")
+			sls.Logger.Info("new............. In PLAIN PERFORMANCE")
 			iops := utils.ToInt(*volumeRequest.Iops)
 			if volume_type == "block" {
 				complex_type = base_type_name + "PerformanceStorage_Iscsi"
@@ -122,22 +121,22 @@ func (sls *SLBlockSession) VolumeCreate(volumeRequest provider.Volume) (*provide
 				complex_type = base_type_name + "PerformanceStorage_Nfs"
 			}
 			prices = []datatypes.Product_Item_Price{
-				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, order_category_code))},
-				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPerformanceSpacePrice(sls.logger, packageDetails, *volumeRequest.Capacity))},
-				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPerformanceIopsPrice(sls.logger, packageDetails, *volumeRequest.Capacity, iops))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, order_category_code))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPerformanceSpacePrice(sls.Logger, packageDetails, *volumeRequest.Capacity))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPerformanceIopsPrice(sls.Logger, packageDetails, *volumeRequest.Capacity, iops))},
 			}
 		} else { //volumeRequest.ProviderType == 'endurance'
-			sls.logger.Info("new............. In PLAIN ENDURANCE")
+			sls.Logger.Info("new............. In PLAIN ENDURANCE")
 			complex_type = base_type_name + "Storage_Enterprise"
 			prices = []datatypes.Product_Item_Price{
-				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, order_category_code))},
-				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, "storage_"+volume_type))},
-				datatypes.Product_Item_Price{Id: sl.Int(utils.GetEnterpriseSpacePrice(sls.logger, packageDetails, "endurance", *volumeRequest.Capacity, *volumeRequest.Tier))},
-				datatypes.Product_Item_Price{Id: sl.Int(utils.GetEnterpriseEnduranceTierPrice(sls.logger, packageDetails, *volumeRequest.Tier))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, order_category_code))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, "storage_"+volume_type))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetEnterpriseSpacePrice(sls.Logger, packageDetails, "endurance", *volumeRequest.Capacity, *volumeRequest.Tier))},
+				datatypes.Product_Item_Price{Id: sl.Int(utils.GetEnterpriseEnduranceTierPrice(sls.Logger, packageDetails, *volumeRequest.Tier))},
 			}
 
 			if volumeRequest.SnapshotSpace != nil && *volumeRequest.SnapshotSpace > 0 {
-				prices = append(prices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetEnterpriseSpacePrice(sls.logger, packageDetails, "snapshot", *volumeRequest.SnapshotSpace, *volumeRequest.Tier))})
+				prices = append(prices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetEnterpriseSpacePrice(sls.Logger, packageDetails, "snapshot", *volumeRequest.SnapshotSpace, *volumeRequest.Tier))})
 			}
 		}
 	}
@@ -163,24 +162,23 @@ func (sls *SLBlockSession) VolumeCreate(volumeRequest provider.Volume) (*provide
 		}
 	}
 	// Step 5 - Place the order
-	sls.logger.Info("Order details for SL ....", zap.Object("orderContainer", orderContainer))
-	productOrderObj := sls.backend.GetProductOrderService()
+	sls.Logger.Info("Order details for SL ....", zap.Reflect("orderContainer", orderContainer))
+	productOrderObj := sls.Backend.GetProductOrderService()
 	volOrder, err := productOrderObj.PlaceOrder(orderContainer, sl.Bool(false))
 	if err != nil {
 		return nil, messages.GetUserError("E0011", err, "Volume order failed")
 	}
-	sls.logger.Info("Order status details ....", zap.Object("volOrder", volOrder), zap.Error(err))   // TODO: Will remove this
+	sls.Logger.Info("Order status details ....", zap.Reflect("volOrder", volOrder), zap.Error(err)) // TODO: Will remove this
 
 	//! Step 6- wait for provisioning completion
 	volumeObj, errProv := sls.handleProvisioning(*volOrder.OrderId)
 	if errProv != nil {
-		sls.logger.Error("**Provisioning failed ....", zap.Object("volOrder", volOrder), zap.Error(errProv))
+		sls.Logger.Error("**Provisioning failed ....", zap.Reflect("volOrder", volOrder), zap.Error(errProv))
 		return nil, messages.GetUserError("E0040", errProv, *volOrder.OrderId)
 	}
-	sls.logger.Info("Volume details ... ", zap.Object("Volume", volumeObj))
+	sls.Logger.Info("Volume details ... ", zap.Reflect("Volume", volumeObj))
 	return volumeObj, nil
 }
-
 
 // Create the volume from snapshot with snapshot tags
 func (sls *SLBlockSession) VolumeCreateFromSnapshot(snapshot provider.Snapshot, tags map[string]string) (*provider.Volume, error) {
@@ -188,7 +186,7 @@ func (sls *SLBlockSession) VolumeCreateFromSnapshot(snapshot provider.Snapshot, 
 	volid := utils.ToInt(snapshot.VolumeID)
 	snapshotID := utils.ToInt(snapshot.SnapshotID)
 	if volid == 0 || snapshotID == 0 {
-		sls.logger.Error("No proper input, please provide volume ID and snapshot space size")
+		sls.Logger.Error("No proper input, please provide volume ID and snapshot space size")
 		return nil, messages.GetUserError("E0022", nil)
 	}
 
@@ -200,22 +198,22 @@ func (sls *SLBlockSession) VolumeCreateFromSnapshot(snapshot provider.Snapshot, 
 
 	// Step 2- Get the original volume Details
 	block_mask := "id,billingItem[location,hourlyFlag],snapshotCapacityGb,storageType[keyName],capacityGb,originalVolumeSize,provisionedIops,storageTierLevel,osType[keyName],staasVersion,hasEncryptionAtRest"
-	storageObj := sls.backend.GetNetworkStorageService()
+	storageObj := sls.Backend.GetNetworkStorageService()
 	originalVolume, err := storageObj.ID(volid).Mask(block_mask).GetObject()
 	if err != nil {
-		sls.logger.Error("While getting Original Volume", zap.Object("Error", err))
+		sls.Logger.Error("While getting Original Volume", zap.Reflect("Error", err))
 		return nil, messages.GetUserError("E0011", err, volid, "Not a valid volume ID")
 	}
 
 	// Step 3: verify original volume exists
 	if originalVolume.BillingItem == nil {
-		sls.logger.Error("Original Volume has been deleted", zap.Object("BillingItem", originalVolume.BillingItem))
+		sls.Logger.Error("Original Volume has been deleted", zap.Reflect("BillingItem", originalVolume.BillingItem))
 		return nil, messages.GetUserError("E0014", nil, volid)
 	}
 
 	// Step 4: Verify that the original volume has snapshot space (needed for duplication)
 	if originalVolume.SnapshotCapacityGb == nil {
-		sls.logger.Error("Original Volume does not have Snapshot Capacity", zap.Object("SnapshotCapacity", originalVolume.SnapshotCapacityGb))
+		sls.Logger.Error("Original Volume does not have Snapshot Capacity", zap.Reflect("SnapshotCapacity", originalVolume.SnapshotCapacityGb))
 		return nil, messages.GetUserError("E0023", nil, volid)
 	}
 	originalSnapshotSize := utils.ToInt(*originalVolume.SnapshotCapacityGb)
@@ -225,14 +223,14 @@ func (sls *SLBlockSession) VolumeCreateFromSnapshot(snapshot provider.Snapshot, 
 
 	// Step 4: Get the datacenter location ID for the original volume
 	if originalVolume.BillingItem.Location == nil || originalVolume.BillingItem.Location.Id == nil {
-		sls.logger.Error("Original Volume does not have location ID", zap.Object("Location", originalVolume.BillingItem.Location))
+		sls.Logger.Error("Original Volume does not have location ID", zap.Reflect("Location", originalVolume.BillingItem.Location))
 		return nil, messages.GetUserError("E0024", nil, volid)
 	}
 	originalVolumeLocationID := *originalVolume.BillingItem.Location.Id
 
 	// Step 5: Ensure the origin volume is SIaaS v2 or higher and supports Encryption at Rest
 	if !utils.IsVolumeCreatedWithStaaS(originalVolume) {
-		sls.logger.Error("Original Volume does not support StaaS or not support Encryption at Rest")
+		sls.Logger.Error("Original Volume does not support StaaS or not support Encryption at Rest")
 		return nil, messages.GetUserError("E0018", nil, volid)
 	}
 
@@ -250,11 +248,10 @@ func (sls *SLBlockSession) VolumeCreateFromSnapshot(snapshot provider.Snapshot, 
 	}
 
 	// Step 8: Get the appropriate package for the order, 'storage_as_a_service' is used
-	packageDetails, pkgError := utils.GetPackageDetails(sls.logger, sls.backend, "storage_as_a_service")
+	packageDetails, pkgError := utils.GetPackageDetails(sls.Logger, sls.Backend, "storage_as_a_service")
 	if pkgError != nil {
 		return nil, messages.GetUserError("E0017", pkgError, "storage_as_a_service")
 	}
-
 
 	// Step 9: get original storage type
 	originalStorageType := *originalVolume.StorageType.KeyName
@@ -262,18 +259,18 @@ func (sls *SLBlockSession) VolumeCreateFromSnapshot(snapshot provider.Snapshot, 
 	finalPrices := []datatypes.Product_Item_Price{}
 	if strings.Contains(originalStorageType, "ENDURANCE") {
 		if duplicateVolumeTier == "" {
-			duplicateVolumeTier = utils.GetEnduranceTierIopsPerGB(sls.logger, originalVolume)
+			duplicateVolumeTier = utils.GetEnduranceTierIopsPerGB(sls.Logger, originalVolume)
 		}
 		volumeCategory := fmt.Sprintf(`storage_%s`, "block")
 		finalPrices = []datatypes.Product_Item_Price{
-			datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, "storage_as_a_service"))},
-			datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, volumeCategory))},
-			datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSEnduranceSpacePrice(sls.logger, packageDetails, duplicateVolumeSize, duplicateVolumeTier))},
-			datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSEnduranceTierPrice(sls.logger, packageDetails, duplicateVolumeTier))},
+			datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, "storage_as_a_service"))},
+			datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, volumeCategory))},
+			datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSEnduranceSpacePrice(sls.Logger, packageDetails, duplicateVolumeSize, duplicateVolumeTier))},
+			datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSEnduranceTierPrice(sls.Logger, packageDetails, duplicateVolumeTier))},
 		}
 
 		if duplicateSnapshotSize > 0 {
-			finalPrices = append(finalPrices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSSnapshotSpacePrice(sls.logger, packageDetails, duplicateSnapshotSize, duplicateVolumeTier, 0))})
+			finalPrices = append(finalPrices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSSnapshotSpacePrice(sls.Logger, packageDetails, duplicateSnapshotSize, duplicateVolumeTier, 0))})
 		}
 	} else if strings.Contains(originalStorageType, "PERFORMANCE") {
 		isPerformanceVolume = true
@@ -286,17 +283,17 @@ func (sls *SLBlockSession) VolumeCreateFromSnapshot(snapshot provider.Snapshot, 
 
 		volumeCategory := fmt.Sprintf(`storage_%s`, originalStorageType)
 		finalPrices = []datatypes.Product_Item_Price{
-			datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, "storage_as_a_service"))},
-			datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.logger, packageDetails, volumeCategory))},
-			datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSPerformanceSpacePrice(sls.logger, packageDetails, duplicateVolumeSize))},
-			datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSPerformanceIopsPrice(sls.logger, packageDetails, duplicateVolumeSize, duplicateIops))},
+			datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, "storage_as_a_service"))},
+			datatypes.Product_Item_Price{Id: sl.Int(utils.GetPriceIDByCategory(sls.Logger, packageDetails, volumeCategory))},
+			datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSPerformanceSpacePrice(sls.Logger, packageDetails, duplicateVolumeSize))},
+			datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSPerformanceIopsPrice(sls.Logger, packageDetails, duplicateVolumeSize, duplicateIops))},
 		}
 		if duplicateSnapshotSize > 0 {
-			finalPrices = append(finalPrices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSSnapshotSpacePrice(sls.logger, packageDetails, duplicateVolumeSize, "", duplicateIops))})
+			finalPrices = append(finalPrices, datatypes.Product_Item_Price{Id: sl.Int(utils.GetSaaSSnapshotSpacePrice(sls.Logger, packageDetails, duplicateVolumeSize, "", duplicateIops))})
 		}
 
 	} else {
-		sls.logger.Error("Origin volume does not have a valid storage type (with an appropriate keyName to indicate the volume is a PERFORMANCE or an ENDURANCE volume)")
+		sls.Logger.Error("Origin volume does not have a valid storage type (with an appropriate keyName to indicate the volume is a PERFORMANCE or an ENDURANCE volume)")
 		return nil, messages.GetUserError("E0026", nil, volid)
 	}
 
@@ -322,21 +319,21 @@ func (sls *SLBlockSession) VolumeCreateFromSnapshot(snapshot provider.Snapshot, 
 	}
 
 	// Step 11- Placing order
-	sls.logger.Info("Duplicate Order details ... ", zap.Object("Order Details->", duplicate_order))
-	productOrderObj := sls.backend.GetProductOrderService()
+	sls.Logger.Info("Duplicate Order details ... ", zap.Reflect("Order Details->", duplicate_order))
+	productOrderObj := sls.Backend.GetProductOrderService()
 	newOrderID, orderError := productOrderObj.PlaceOrder(duplicate_order, sl.Bool(false))
 	if orderError != nil {
 		return nil, messages.GetUserError("E0028", orderError, volid, snapshotID)
 	}
-	sls.logger.Info("Successfully placed order from snapshot .... ", zap.Object("orderID", *newOrderID.OrderId), zap.Object("OriginalVolumeID", volid), zap.Object("OriginalSnapshotID", snapshotID))
+	sls.Logger.Info("Successfully placed order from snapshot .... ", zap.Reflect("orderID", *newOrderID.OrderId), zap.Reflect("OriginalVolumeID", volid), zap.Reflect("OriginalSnapshotID", snapshotID))
 
 	// Step 12- handle provisioning
 	volumeObj, errProv := sls.handleProvisioning(*newOrderID.OrderId)
 	if errProv != nil {
-		sls.logger.Error("**Provisioning failed ....", zap.Int("volOrder", *newOrderID.OrderId), zap.Error(errProv))
+		sls.Logger.Error("**Provisioning failed ....", zap.Int("volOrder", *newOrderID.OrderId), zap.Error(errProv))
 		return nil, messages.GetUserError("E0040", errProv, *newOrderID.OrderId)
 	}
-	sls.logger.Info("Volume details ... ", zap.Object("Volume", volumeObj))
+	sls.Logger.Info("Volume details ... ", zap.Reflect("Volume", volumeObj))
 	return volumeObj, nil
 }
 
@@ -364,14 +361,14 @@ func (sls *SLBlockSession) VolumeGet(id string) (*provider.Volume, error) {
 
 	// Step 2: Get volume details from SL
 	mask := "id,username,capacityGb,createDate,snapshotCapacityGb,parentVolume[snapshotSizeBytes],storageType[keyName],serviceResource[datacenter[name]],provisionedIops,lunId,originalVolumeName,storageTierLevel,notes"
-	storageObj := sls.backend.GetNetworkStorageIscsiService()
+	storageObj := sls.Backend.GetNetworkStorageIscsiService()
 	storage, err := storageObj.ID(volumeID).Mask(mask).GetObject()
 	if err != nil {
 		return nil, messages.GetUserError("E0011", err, volumeID, "Not a valid volume ID")
 	}
 
 	// Step 3: Convert volume to framework based volume object
-	vol := utils.CovertToVolumeType(storage, sls.logger, SoftLayer, VolumeTypeBlock)
+	vol := utils.ConvertToVolumeType(utils.ConvertToNetworkStorage(storage), sls.Logger, SoftLayer, VolumeTypeBlock)
 	return vol, err
 }
 
@@ -386,10 +383,10 @@ func (sls *SLBlockSession) getBillingItemID(storageID int) (int, bool, error) {
 	//! Step 1: Get volume details
 	immediate := false
 	mask := "id,billingItem[id,hourlyFlag]"
-	storageObj := sls.backend.GetNetworkStorageIscsiService()
+	storageObj := sls.Backend.GetNetworkStorageIscsiService()
 	storage, err := storageObj.ID(storageID).Mask(mask).GetObject()
 	if err != nil {
-			return 0, immediate, messages.GetUserError("E0011", err, storageID, "Volume ID not found")
+		return 0, immediate, messages.GetUserError("E0011", err, storageID, "Volume ID not found")
 	}
 
 	// Step 2- When to delete
@@ -413,38 +410,38 @@ func (sls *SLBlockSession) deleteStorage(networkStorageID int) error {
 	}
 
 	// Step 2: Cancel the volume from SL
-	billingObj := sls.backend.GetBillingItemService()
+	billingObj := sls.Backend.GetBillingItemService()
 	cancelAssociatedBillingItems := true
 	_, err = billingObj.ID(billingId).CancelItem(&immediate, &cancelAssociatedBillingItems, &VOLUME_DELETE_REASON, &VOLUME_DELETE_REASON)
 	if err != nil {
 		return messages.GetUserError("E0006", err, networkStorageID)
 	}
 
-	sls.logger.Info("Successfully deleted storage  ..", zap.Int("StorageID", networkStorageID), zap.Int("BillingID", billingId))
+	sls.Logger.Info("Successfully deleted storage  ..", zap.Int("StorageID", networkStorageID), zap.Int("BillingID", billingId))
 	return nil
 }
 
 //handleProvisioning
 func (sls *SLBlockSession) handleProvisioning(orderID int) (*provider.Volume, error) {
-	sls.logger.Info("Handling provisioning for  ....", zap.Object("OrderID", orderID))
-	storageID, errID := utils.GetStorageID(sls.backend, orderID, sls.logger)
+	sls.Logger.Info("Handling provisioning for  ....", zap.Reflect("OrderID", orderID))
+	storageID, errID := utils.GetStorageID(sls.Backend, orderID, sls.Logger)
 	if errID != nil {
 		return nil, messages.GetUserError("E0011", errID, orderID)
 	}
-	sls.logger.Info("Successfully got the volume ID ....", zap.Object("VolumeID", storageID))
+	sls.Logger.Info("Successfully got the volume ID ....", zap.Reflect("VolumeID", storageID))
 
 	// Step 2- Cancel order if storageID not yet approved
-	err := utils.WaitForTransactionsComplete(sls.backend, storageID)
+	err := utils.WaitForTransactionsComplete(sls.Backend, storageID)
 	if err != nil {
-		sls.logger.Error("**Error while provisioning order", zap.Int("storageId", storageID), zap.Error(err))
+		sls.Logger.Error("**Error while provisioning order", zap.Int("storageId", storageID), zap.Error(err))
 		// cancel order
-		sls.logger.Error("**Cancelling/Cleaning up the Storage Order due to incomplete provision", zap.Int("storageId", storageID))
+		sls.Logger.Error("**Cancelling/Cleaning up the Storage Order due to incomplete provision", zap.Int("storageId", storageID))
 		errDelete := sls.deleteStorage(storageID)
 		if errDelete != nil {
-			sls.logger.Error("**Failed to delete un-provisioned storage, user need to delete it manually", zap.Int("storageId", storageID), zap.Object("Error", errDelete))
+			sls.Logger.Error("**Failed to delete un-provisioned storage, user need to delete it manually", zap.Int("storageId", storageID), zap.Reflect("Error", errDelete))
 		}
 		return nil, err
 	}
-	sls.logger.Info("storage details ... ", zap.Object("storageID", sl.Int(storageID)))
+	sls.Logger.Info("storage details ... ", zap.Reflect("storageID", sl.Int(storageID)))
 	return sls.VolumeGet(strconv.Itoa(storageID))
 }

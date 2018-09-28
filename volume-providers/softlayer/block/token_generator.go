@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/config"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/provider/local"
@@ -74,9 +74,9 @@ func (tg *tokenGenerator) readConfig(logger zap.Logger) (err error) {
 }
 
 func (tg *tokenGenerator) buildToken(contextCredentials provider.ContextCredentials, ts time.Time, logger zap.Logger) (token *jwt.Token, err error) {
-	logger.Debug("Entering getJWTToken", zap.Object("contextCredentials", contextCredentials))
+	logger.Debug("Entering getJWTToken", zap.Reflect("contextCredentials", contextCredentials))
 	defer func() {
-		logger.Debug("Exiting getJWTToken", zap.Object("token", token), local.ZapError(err))
+		logger.Debug("Exiting getJWTToken", zap.Reflect("token", token), local.ZapError(err))
 	}()
 
 	err = tg.readConfig(logger)

@@ -11,14 +11,14 @@
 package backend
 
 import (
-  "fmt"
+	"fmt"
 	"strings"
 	"time"
 )
 
 func retry(retryfunc func() error) error {
 	var err error
-  MAX_RETRY_ATTEMPT := 5
+	MAX_RETRY_ATTEMPT := 5
 	MAX_RETRY_GAP := 30
 	RETRY_GAP := 5
 
@@ -39,7 +39,7 @@ func retry(retryfunc func() error) error {
 				}
 			}
 			if (i + 1) < MAX_RETRY_ATTEMPT {
-        fmt.Printf("\nNeed to replace by logger") // TODO: need to use logger
+				fmt.Printf("\nNeed to replace by logger") // TODO: need to use logger
 				//c.logger.Info("Error while executing the function. Re-attempting execution ..", zap.Int("attempt..", i+2), zap.Int("retry-gap", RETRY_GAP), zap.Int("max-retry-Attempts", MAX_RETRY_ATTEMPT), zap.Error(err))
 			}
 			continue

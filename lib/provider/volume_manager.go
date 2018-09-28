@@ -33,4 +33,9 @@ type VolumeManager interface {
 	// Others
 	// Get volume lists by using snapshot tags
 	VolumesList(tags map[string]string) ([]*Volume, error)
+
+	// GetVolumeByRequestID fetch the volume by request ID.
+	// Request Id is the one that is returned when volume is provsioning request is
+	// placed with Iaas provider.
+	GetVolumeByRequestID(requestID string) (*Volume, error)
 }

@@ -10,13 +10,11 @@
 
 package registry_test
 
-import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+//. "github.com/onsi/ginkgo"
+//. "github.com/onsi/gomega"
+//"github.ibm.com/arahamad/ibm-volume-lib/provider/registry"
+//"github.ibm.com/arahamad/ibm-volume-lib/provider/registry/fakes"
 
-	//"github.ibm.com/arahamad/ibm-volume-lib/provider/registry"
-	//"github.ibm.com/arahamad/ibm-volume-lib/provider/registry/fakes"
-)
 /*
 var _ = Describe("Registry", func() {
 	var (

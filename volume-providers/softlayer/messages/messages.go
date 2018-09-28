@@ -19,7 +19,7 @@ type Message struct {
 	Description string
 	Type        string
 	RC          int
-	Action 			string
+	Action      string
 }
 
 //Implement the Error() interface method

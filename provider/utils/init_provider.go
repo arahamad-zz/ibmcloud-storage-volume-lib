@@ -13,7 +13,7 @@ package utils
 import (
 	"errors"
 	//"fmt"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 
 	softlayer_block "github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/block"
 
@@ -106,7 +106,7 @@ func GenerateContextCredentials(conf *config.Config, providerID string, contextC
 	slAPIKey := conf.Softlayer.SoftlayerAPIKey
 	// Select appropriate authentication strategy
 	switch {
-	case (providerID == conf.Softlayer.SoftlayerBlockProviderName || providerID == conf.Softlayer.SoftlayerFileProviderName)&&
+	case (providerID == conf.Softlayer.SoftlayerBlockProviderName || providerID == conf.Softlayer.SoftlayerFileProviderName) &&
 		!isEmptyStringValue(&slUser) && !isEmptyStringValue(&slAPIKey):
 		return contextCredentialsFactory.ForIaaSAPIKey(util.SafeStringValue(&AccountID), slUser, slAPIKey, logger)
 

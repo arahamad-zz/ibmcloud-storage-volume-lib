@@ -10,7 +10,6 @@
 
 package provider
 
-
 // Error implements the error interface for a Fault.
 // Most easily constructed using util.NewError() or util.NewErrorWithProperties()
 type Error struct {

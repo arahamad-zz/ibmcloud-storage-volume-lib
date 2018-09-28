@@ -11,7 +11,7 @@
 package auth
 
 import (
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
 )

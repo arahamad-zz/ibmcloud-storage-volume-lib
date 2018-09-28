@@ -11,18 +11,12 @@
 package local
 
 import (
-	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
-
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // ZapError formats provider error messages in a useful way for logging,
 // and performs the standard zap.Error on non provider errors
-func ZapError(err error) zap.Field {
-	perr, isPerr := err.(provider.Error)
-	if isPerr {
-		return zap.Object("error", perr)
-	}
-
+func ZapError(err error) zapcore.Field {
 	return zap.Error(err)
 }

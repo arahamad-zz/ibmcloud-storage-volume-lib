@@ -14,8 +14,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
 	"github.com/BurntSushi/toml"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 )
 
 func getEnv(key string) string {
@@ -81,29 +82,29 @@ type BluemixConfig struct {
 
 // SoftlayerConfig ...
 type SoftlayerConfig struct {
-	SoftlayerBlockEnabled 			bool 		`toml:"softlayer_block_enabled"`
-	SoftlayerBlockProviderName 	string 	`toml:"softlayer_block_provider_name"`
-	SoftlayerFileEnabled 				bool 		`toml:"softlayer_file_enabled"`
-	SoftlayerFileProviderName		string	`toml:"softlayer_file_provider_name"`
-	SoftlayerUsername       		string 	`toml:"softlayer_username"`
-	SoftlayerAPIKey         		string 	`toml:"softlayer_api_key"`
-	SoftlayerEndpointURL    		string 	`toml:"softlayer_endpoint_url"`
-	SoftlayerDataCenter     		string 	`toml:"softlayer_datacenter"`
-	SoftlayerTimeout 						string 	`toml:"softlayer_api_timeout"`
+	SoftlayerBlockEnabled      bool   `toml:"softlayer_block_enabled"`
+	SoftlayerBlockProviderName string `toml:"softlayer_block_provider_name"`
+	SoftlayerFileEnabled       bool   `toml:"softlayer_file_enabled"`
+	SoftlayerFileProviderName  string `toml:"softlayer_file_provider_name"`
+	SoftlayerUsername          string `toml:"softlayer_username"`
+	SoftlayerAPIKey            string `toml:"softlayer_api_key"`
+	SoftlayerEndpointURL       string `toml:"softlayer_endpoint_url"`
+	SoftlayerDataCenter        string `toml:"softlayer_datacenter"`
+	SoftlayerTimeout           string `toml:"softlayer_api_timeout"`
 	//Configuration values for JWT tokens
-	SoftlayerJWTKID       			string `toml:"softlayer_jwt_kid"`
-	SoftlayerJWTTTL       			int    `toml:"softlayer_jwt_ttl"`
-	SoftlayerJWTValidFrom 			int    `toml:"softlayer_jwt_valid"`
+	SoftlayerJWTKID       string `toml:"softlayer_jwt_kid"`
+	SoftlayerJWTTTL       int    `toml:"softlayer_jwt_ttl"`
+	SoftlayerJWTValidFrom int    `toml:"softlayer_jwt_valid"`
 
-	SoftlayerIMSEndpointURL 		string `envconfig:"SOFTLAYER_IAM_ENDPOINT_URL"`
-	SoftlayerAPIDebug 					bool
+	SoftlayerIMSEndpointURL string `envconfig:"SOFTLAYER_IAM_ENDPOINT_URL"`
+	SoftlayerAPIDebug       bool
 }
 
 type Gen2Config struct {
-	Gen2ProviderEnabled bool 		`toml:"genesis_provider_enabled"`
-	Gen2Username 				string 	`toml:"genesis_user_name"`
-	Gen2APIKey 					string 	`toml:"genesis_api_key"`
-	Gen2URL 						string 	`toml:"genesis_url"`
+	Gen2ProviderEnabled bool   `toml:"genesis_provider_enabled"`
+	Gen2Username        string `toml:"genesis_user_name"`
+	Gen2APIKey          string `toml:"genesis_api_key"`
+	Gen2URL             string `toml:"genesis_url"`
 }
 
 // GetEtcPath returns the path to the etc directory
