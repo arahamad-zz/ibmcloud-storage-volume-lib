@@ -22,8 +22,6 @@ imports:
   - sl
 - name: github.com/uber-go/atomic
   version: 54f72d32435d760d5604f17a82e2435b28dc4ba5
-- name: github.com/uber-go/zap
-  version: c064b5c44b285a7e2fd5c9b26e8c38228ce2bccb
 - name: go.uber.org/zap
   version: a2773be06b9ac7c318a3a105b5c310af5730c6b4
 - name: golang.org/x/text
