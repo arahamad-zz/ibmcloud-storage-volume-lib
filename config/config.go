@@ -82,10 +82,10 @@ type BluemixConfig struct {
 
 // SoftlayerConfig ...
 type SoftlayerConfig struct {
-	SoftlayerBlockEnabled      bool   `toml:"softlayer_block_enabled"`
-	SoftlayerBlockProviderName string `toml:"softlayer_block_provider_name"`
-	SoftlayerFileEnabled       bool   `toml:"softlayer_file_enabled"`
-	SoftlayerFileProviderName  string `toml:"softlayer_file_provider_name"`
+	SoftlayerBlockEnabled      bool   `toml:"softlayer_block_enabled" envconfig:"SOFTLAYER_BLOCK_ENABLED"`
+	SoftlayerBlockProviderName string `toml:"softlayer_block_provider_name" envconfig:"SOFTLAYER_BLOCK_PROVIDER_NAME"`
+	SoftlayerFileEnabled       bool   `toml:"softlayer_file_enabled" envconfig:"SOFTLAYER_FILE_ENABLED"`
+	SoftlayerFileProviderName  string `toml:"softlayer_file_provider_name" envconfig:"SOFTLAYER_FILE_PROVIDER_NAME"`
 	SoftlayerUsername          string `toml:"softlayer_username"`
 	SoftlayerAPIKey            string `toml:"softlayer_api_key"`
 	SoftlayerEndpointURL       string `toml:"softlayer_endpoint_url"`
