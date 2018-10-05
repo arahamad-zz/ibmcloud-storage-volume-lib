@@ -19,6 +19,7 @@ import (
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/utils"
+	"github.com/softlayer/softlayer-go/filter"
 	"go.uber.org/zap"
 )
 
@@ -40,31 +41,39 @@ func (*SLSession) Close() {
 }
 
 func (sls *SLSession) GetVolumeByRequestID(requestID string) (*provider.Volume, error) {
-	filter := fmt.Sprintf(`{
-								"networkStorage":{
-												"nasType":{"operation":%s},
-												"billingItem":{
-																"orderItem":{"order":{"id":{"operation":%d}}}
-												}
-								}
-				}`, sls.VolumeType, requestID)
-	accountService := sls.Backend.GetAccountService().Filter(filter)
-	storage, err := accountService.GetNetworkStorage()
+	/*filter := fmt.Sprintf(`{
+					"networkStorage":{
+									"nasType":{"operation":%s},
+									"billingItem":{
+													"orderItem":{"order":{"id":{"operation":%d}}}
+									}
+					}
+	}`, sls.VolumeType, requestID)*/
+	storageMask := "id,username,notes,billingItem.orderItem.order.id"
 
+	slFilters := filter.New()
+	slFilters = append(slFilters, filter.Path("networkStorage.nasType").Eq(sls.VolumeType))
+	slFilters = append(slFilters, filter.Path("networkStorage.billingItem.orderItem.order.id").Eq(requestID)) // Do not fetch cancelled volumes
+
+	sls.Logger.Info("Filterused ", zap.Reflect("slFilters", slFilters))
+	accountService := sls.Backend.GetAccountService().Mask(storageMask)
+	accountService = accountService.Filter(slFilters.Build())
+	storages, err := accountService.GetNetworkStorage()
+	sls.Logger.Info("Volumes found", zap.Reflect("Volumes", storages))
 	if err != nil {
 		return nil, err
 	}
-	switch len(storage) {
+	switch len(storages) {
 	case 0:
 		return nil, fmt.Errorf("unable to find network storage associated with order %d", requestID)
 	case 1:
 		// double check if correct storage is found by matching requestID and fouund orderID
-		orderID := strconv.Itoa(*storage[0].BillingItem.OrderItem.Order.Id)
+		orderID := strconv.Itoa(*storages[0].BillingItem.OrderItem.Order.Id)
 		if orderID == requestID {
-			vol := utils.ConvertToVolumeType(storage[0], sls.Logger, sls.Provider, sls.VolumeType)
+			vol := utils.ConvertToVolumeType(storages[0], sls.Logger, sls.Provider, sls.VolumeType)
 			return vol, nil
 		} else {
-			sls.Logger.Error("Incorrect storage found", zap.String("requestID", requestID), zap.Reflect("storage", storage[0]))
+			sls.Logger.Error("Incorrect storage found", zap.String("requestID", requestID), zap.Reflect("storage", storages[0]))
 			return nil, fmt.Errorf("Incorrect storage found %d associated with order %d", orderID, requestID)
 		}
 	default:

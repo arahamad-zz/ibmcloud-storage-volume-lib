@@ -75,9 +75,9 @@ func ParseConfig(filePath string, conf interface{}, logger zap.Logger) {
 type BluemixConfig struct {
 	IamURL          string `toml:"iam_url"`
 	IamClientID     string `toml:"iam_client_id"`
-	IamClientSecret string `toml:"iam_client_secret"`
-	IamApiKey       string `toml:"iam_api_key"`
-	RefreshToken    string `toml:"refresh_token"`
+	IamClientSecret string `toml:"iam_client_secret" json:"-"`
+	IamAPIKey       string `toml:"iam_api_key" json:"-"`
+	RefreshToken    string `toml:"refresh_token" json:"-"`
 }
 
 // SoftlayerConfig ...
@@ -86,8 +86,8 @@ type SoftlayerConfig struct {
 	SoftlayerBlockProviderName string `toml:"softlayer_block_provider_name" envconfig:"SOFTLAYER_BLOCK_PROVIDER_NAME"`
 	SoftlayerFileEnabled       bool   `toml:"softlayer_file_enabled" envconfig:"SOFTLAYER_FILE_ENABLED"`
 	SoftlayerFileProviderName  string `toml:"softlayer_file_provider_name" envconfig:"SOFTLAYER_FILE_PROVIDER_NAME"`
-	SoftlayerUsername          string `toml:"softlayer_username"`
-	SoftlayerAPIKey            string `toml:"softlayer_api_key"`
+	SoftlayerUsername          string `toml:"softlayer_username" json:"-"`
+	SoftlayerAPIKey            string `toml:"softlayer_api_key" json:"-"`
 	SoftlayerEndpointURL       string `toml:"softlayer_endpoint_url"`
 	SoftlayerDataCenter        string `toml:"softlayer_datacenter"`
 	SoftlayerTimeout           string `toml:"softlayer_api_timeout"`
@@ -96,7 +96,7 @@ type SoftlayerConfig struct {
 	SoftlayerJWTTTL       int    `toml:"softlayer_jwt_ttl"`
 	SoftlayerJWTValidFrom int    `toml:"softlayer_jwt_valid"`
 
-	SoftlayerIMSEndpointURL string `envconfig:"SOFTLAYER_IAM_ENDPOINT_URL"`
+	SoftlayerIMSEndpointURL string `toml:"softlayer_iam_endpoint_url"`
 	SoftlayerAPIDebug       bool
 }
 

@@ -99,19 +99,19 @@ func OpenProviderSession(conf *config.Config, providers registry.Providers, prov
 
 func GenerateContextCredentials(conf *config.Config, providerID string, contextCredentialsFactory local.ContextCredentialsFactory, logger zap.Logger) (provider.ContextCredentials, error) {
 	logger.Info("Generating generateContextCredentials for ", zap.String("Provider ID", providerID))
-	var iamAPIKey *string
 
-	AccountID := ""
+	AccountID := conf.Bluemix.IamClientID
 	slUser := conf.Softlayer.SoftlayerUsername
 	slAPIKey := conf.Softlayer.SoftlayerAPIKey
+	iamAPIKey := conf.Bluemix.IamAPIKey
 	// Select appropriate authentication strategy
 	switch {
 	case (providerID == conf.Softlayer.SoftlayerBlockProviderName || providerID == conf.Softlayer.SoftlayerFileProviderName) &&
 		!isEmptyStringValue(&slUser) && !isEmptyStringValue(&slAPIKey):
 		return contextCredentialsFactory.ForIaaSAPIKey(util.SafeStringValue(&AccountID), slUser, slAPIKey, logger)
 
-	case !isEmptyStringValue(iamAPIKey):
-		return contextCredentialsFactory.ForIAMAPIKey(AccountID, *iamAPIKey, logger)
+	case !isEmptyStringValue(&iamAPIKey):
+		return contextCredentialsFactory.ForIAMAPIKey(AccountID, iamAPIKey, logger)
 
 	default:
 		return provider.ContextCredentials{}, util.NewError("ErrorInsufficientAuthentication",

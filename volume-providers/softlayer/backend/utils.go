@@ -39,7 +39,7 @@ func retry(retryfunc func() error) error {
 				}
 			}
 			if (i + 1) < MAX_RETRY_ATTEMPT {
-				fmt.Printf("\nNeed to replace by logger") // TODO: need to use logger
+				fmt.Printf("\nNeed to replace by logger. Reattenmpting execution func: %#v, attempt =%d,  max attepmt = %d ,error %#v", retryfunc, i+2, MAX_RETRY_ATTEMPT, err) // TODO: need to use logger
 				//c.logger.Info("Error while executing the function. Re-attempting execution ..", zap.Int("attempt..", i+2), zap.Int("retry-gap", RETRY_GAP), zap.Int("max-retry-Attempts", MAX_RETRY_ATTEMPT), zap.Error(err))
 			}
 			continue

@@ -429,12 +429,8 @@ func ConvertToVolumeType(storage datatypes.Network_Storage, logger zap.Logger, p
 	var newnotes map[string]string
 	if storage.Notes != nil {
 		_ = json.Unmarshal([]byte(*storage.Notes), &newnotes)
-	} else {
-		newnotes = make(map[string]string)
-		newnotes["region"] = ""
+		volume.Region = newnotes["region"]
 	}
-	volume.Region = newnotes["region"]
-
 	volume.Provider = prName
 	volume.VolumeType = volType
 	if storage.StorageType != nil && storage.StorageType.KeyName != nil {
