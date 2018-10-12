@@ -16,7 +16,7 @@ import (
 	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
 
 	//"github.com/prometheus/client_golang/prometheus"
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 )
 
 // Provider describes the contract that is implemented by an internal provider implementation

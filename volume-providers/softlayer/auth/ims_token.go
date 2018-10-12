@@ -13,7 +13,7 @@ package auth
 import (
 	"strconv"
 
-	"github.com/uber-go/zap"
+	"go.uber.org/zap"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/provider/auth"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/provider/local"

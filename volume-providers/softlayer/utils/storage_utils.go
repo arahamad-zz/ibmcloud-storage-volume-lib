@@ -10,17 +10,18 @@
 package utils
 
 import (
-	"time"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"encoding/json"
-	"github.com/softlayer/softlayer-go/datatypes"
-	"github.com/uber-go/zap"
+
+	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/backend"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/messages"
-	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
+	"github.com/softlayer/softlayer-go/datatypes"
+	"go.uber.org/zap"
 )
 
 var ENDURANCE_TIERS = map[string]int{
@@ -30,24 +31,23 @@ var ENDURANCE_TIERS = map[string]int{
 	"10":   1000,
 }
 
-var IOPS = map[string]string { "READHEAVY_TIER": "2", "WRITEHEAVY_TIER": "4", "10_IOPS_PER_GB": "10"}
-
+var IOPS = map[string]string{"READHEAVY_TIER": "2", "WRITEHEAVY_TIER": "4", "10_IOPS_PER_GB": "10"}
 
 // GetDataCenterID
 func GetDataCenterID(logger zap.Logger, sess backend.Session, dataCenterName string) (int, error) {
 	locationObj := sess.GetLocationService()
 	locations, err := locationObj.GetDatacenters()
 	if err != nil {
-		logger.Error("Could not find location", zap.Object("locaion Name", dataCenterName), zap.Object("Error", err))
+		logger.Error("Could not find location", zap.String("locaion Name", dataCenterName), zap.Error(err))
 		return 0, err
 	}
 	for _, location := range locations {
 		if location.Name != nil && *location.Name == dataCenterName && location.Id != nil {
-			logger.Info("Got location ID: ", zap.Object("ID", *location.Id))
+			logger.Info("Got location ID: ", zap.Int("ID", *location.Id))
 			return *location.Id, nil
 		}
 	}
-	logger.Error("Could not find location", zap.Object("locaion Name", dataCenterName))
+	logger.Error("Could not find location", zap.String("locaion Name", dataCenterName))
 	return 0, err
 }
 
@@ -128,9 +128,9 @@ func GetSaaSEnduranceSpacePrice(logger zap.Logger, packageDetails datatypes.Prod
 		}
 
 		capacityMin := ToInt(*item.CapacityMinimum)
-    capacityMax := ToInt(*item.CapacityMaximum)
-    if size < capacityMin || size > capacityMax {
-      continue
+		capacityMax := ToInt(*item.CapacityMaximum)
+		if size < capacityMin || size > capacityMax {
+			continue
 		}
 
 		priceId := GetPriceIDFromItemByPriceCategory(logger, item, "performance_storage_space", "", 0)
@@ -153,13 +153,13 @@ func GetSaaSPerformanceSpacePrice(logger zap.Logger, packageDetails datatypes.Pr
 		}
 
 		capacityMin := ToInt(*item.CapacityMinimum)
-    capacityMax := ToInt(*item.CapacityMaximum)
-    if size < capacityMin || size > capacityMax {
+		capacityMax := ToInt(*item.CapacityMaximum)
+		if size < capacityMin || size > capacityMax {
 			continue
 		}
 
 		keyName := fmt.Sprintf(`%d_%d_GBS`, capacityMin, capacityMax)
-		logger.Info("GetSaaSPerformanceSpacePrice......", zap.Object("keyName", keyName))
+		logger.Info("GetSaaSPerformanceSpacePrice......", zap.String("keyName", keyName))
 		if item.KeyName == nil || *item.KeyName != keyName {
 			continue
 		}
@@ -183,8 +183,8 @@ func GetSaaSPerformanceIopsPrice(logger zap.Logger, packageDetails datatypes.Pro
 		}
 
 		capacityMin := ToInt(*item.CapacityMinimum)
-    capacityMax := ToInt(*item.CapacityMaximum)
-    if iops < capacityMin || iops > capacityMax {
+		capacityMax := ToInt(*item.CapacityMaximum)
+		if iops < capacityMin || iops > capacityMax {
 			continue
 		}
 
@@ -242,7 +242,7 @@ func GetSaaSSnapshotSpacePrice(logger zap.Logger, packageDetails datatypes.Produ
 }
 
 // GetSaaSSnapshotOrderSpacePrice
-func GetSaaSSnapshotOrderSpacePrice(logger zap.Logger, packageDetails datatypes.Product_Package, size int, restrictionType string, restrictionValue int ) int {
+func GetSaaSSnapshotOrderSpacePrice(logger zap.Logger, packageDetails datatypes.Product_Package, size int, restrictionType string, restrictionValue int) int {
 	for _, item := range packageDetails.Items {
 		if item.Capacity == nil || *item.Capacity != datatypes.Float64(size) {
 			continue
@@ -253,7 +253,7 @@ func GetSaaSSnapshotOrderSpacePrice(logger zap.Logger, packageDetails datatypes.
 			return priceId
 		}
 	}
-  //fmt.Errorf("Could not find price")
+	//fmt.Errorf("Could not find price")
 	return 0
 }
 
@@ -274,7 +274,7 @@ func GetEnduranceTierIopsPerGB(logger zap.Logger, originalVolume datatypes.Netwo
 	} else if tier == "10_IOPS_PER_GB" {
 		iopsPerGB = "10"
 	} else {
-		logger.Info("Could not found iops for Tier ", zap.Object("Tier", tier))
+		logger.Info("Could not found iops for Tier ", zap.String("Tier", tier))
 	}
 	return iopsPerGB
 }
@@ -402,7 +402,7 @@ func ToInt(valueInInt string) int {
 type retryFuncProv func() (bool, error)
 
 func ProvisioningRetry(fn retryFuncProv) error {
-	SL_CREATE_STORAGE_TIMEOUT := 30         //getFromEnv("SL_CREATE_STORAGE_TIMEOUT", SL_CREATE_STORAGE_TIMEOUT)
+	SL_CREATE_STORAGE_TIMEOUT := 30          //getFromEnv("SL_CREATE_STORAGE_TIMEOUT", SL_CREATE_STORAGE_TIMEOUT)
 	SL_CREATE_STORAGE_POLLING_INTERVAL := 15 //getFromEnv("SL_CREATE_STORAGE_POLLING_INTERVAL", SL_CREATE_STORAGE_POLLING_INTERVAL)
 	provisionTimeout := time.Duration(SL_CREATE_STORAGE_TIMEOUT) * time.Second
 
@@ -422,19 +422,15 @@ func ProvisioningRetry(fn retryFuncProv) error {
 	return messages.GetUserError("E0039", err)
 }
 
-func CovertToVolumeType(storage datatypes.Network_Storage_Iscsi, logger zap.Logger, prName provider.VolumeProvider, volType provider.VolumeType) (volume *provider.Volume) {
+func ConvertToVolumeType(storage datatypes.Network_Storage, logger zap.Logger, prName provider.VolumeProvider, volType provider.VolumeType) (volume *provider.Volume) {
 	logger.Info("in CovertToVolumeType")
 	volume = &provider.Volume{}
 	volume.VolumeID = strconv.Itoa(*storage.Id)
 	var newnotes map[string]string
 	if storage.Notes != nil {
 		_ = json.Unmarshal([]byte(*storage.Notes), &newnotes)
-	} else {
-		newnotes = make(map[string]string)
-		newnotes["region"] = ""
+		volume.Region = newnotes["region"]
 	}
-	volume.Region = newnotes["region"]
-
 	volume.Provider = prName
 	volume.VolumeType = volType
 	if storage.StorageType != nil && storage.StorageType.KeyName != nil {
@@ -452,13 +448,26 @@ func CovertToVolumeType(storage datatypes.Network_Storage_Iscsi, logger zap.Logg
 	if storage.StorageTierLevel != nil {
 		volume.Tier = storage.StorageTierLevel
 		iops := IOPS[*storage.StorageTierLevel]
-		volume.Iops = &iops//storage.ProvisionedIops
+		volume.Iops = &iops //storage.ProvisionedIops
 	}
 	if storage.CreateDate != nil {
 		volume.CreationTime, _ = time.Parse(time.RFC3339, storage.CreateDate.String())
 	}
 	volume.VolumeNotes = newnotes
 	return
+}
+
+func ConvertToNetworkStorage(storage datatypes.Network_Storage_Iscsi) datatypes.Network_Storage {
+	networkStorageIscsi := datatypes.Network_Storage{}
+	networkStorageIscsi.Id = storage.Id
+	networkStorageIscsi.Notes = storage.Notes
+	networkStorageIscsi.StorageType = storage.StorageType
+	networkStorageIscsi.CapacityGb = storage.CapacityGb
+	networkStorageIscsi.SnapshotCapacityGb = storage.SnapshotCapacityGb
+	networkStorageIscsi.StorageTierLevel = storage.StorageTierLevel
+	networkStorageIscsi.CreateDate = storage.CreateDate
+	networkStorageIscsi.ServiceResourceName = storage.ServiceResourceName
+	return networkStorageIscsi
 }
 
 func ConverStringToMap(mapString string) map[string]string {
@@ -468,11 +477,11 @@ func ConverStringToMap(mapString string) map[string]string {
 	splitString := strings.Split(mapString, ",")
 	m := make(map[string]string)
 	for _, pair := range splitString {
-    z := strings.Split(pair, ":")
+		z := strings.Split(pair, ":")
 		if len(z) < 1 {
 			continue
 		}
-    m[z[0]] = z[1]
+		m[z[0]] = z[1]
 	}
 	return m
 }

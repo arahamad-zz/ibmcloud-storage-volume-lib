@@ -15,7 +15,7 @@ package provider
 type Context interface {
 	VolumeManager
 	SnapshotManager
-  // other can be added here
+	// other can be added here
 }
 
 // Session is an Context that is notified when it is no longer required

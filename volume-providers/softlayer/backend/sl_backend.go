@@ -13,10 +13,10 @@ package backend
 import (
 	"net/http"
 
+	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
 	"github.com/softlayer/softlayer-go/services"
 	"github.com/softlayer/softlayer-go/session"
-	"github.com/uber-go/zap"
-	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
+	"go.uber.org/zap"
 )
 
 // SessionSL implements the backend.Session interface using a real softlayer-go Session

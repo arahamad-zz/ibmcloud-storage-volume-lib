@@ -12,9 +12,9 @@ package auth
 
 import (
 	"github.com/arahamad/ibmcloud-storage-volume-lib/config"
-	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/iam"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/provider/auth"
 	"github.com/arahamad/ibmcloud-storage-volume-lib/provider/local"
+	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/iam"
 )
 
 // contextCredentialsFactory ...
@@ -26,7 +26,7 @@ type contextCredentialsFactory struct {
 var _ local.ContextCredentialsFactory = &contextCredentialsFactory{}
 
 // NewContextCredentialsFactory ...
-func NewContextCredentialsFactory(bluemixConfig *config.BluemixConfig, softlayerConfig *config.SoftlayerConfig) (local.ContextCredentialsFactory, error) {
+func NewContextCredentialsFactory(bluemixConfig *config.BluemixConfig, softlayerConfig *config.SoftlayerConfig) (*contextCredentialsFactory, error) {
 	tokenExchangeService, err := iam.NewTokenExchangeService(bluemixConfig)
 	if err != nil {
 		return nil, err

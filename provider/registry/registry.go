@@ -36,7 +36,7 @@ type ProviderRegistry struct {
 func (pr *ProviderRegistry) Get(providerID string) (prov local.Provider, err error) {
 	prov = pr.providers[providerID]
 	if prov == nil {
-		err = util.NewError("ErrorUnclassified", "Provider unknown: " + providerID)
+		err = util.NewError("ErrorUnclassified", "Provider unknown: "+providerID)
 	}
 	return
 }

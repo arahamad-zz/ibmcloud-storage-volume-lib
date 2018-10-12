@@ -23,10 +23,10 @@ const (
 
 // ContextCredentials represents user credentials (e.g. API key) for volume operations from IaaS provider
 type ContextCredentials struct {
-	AuthType         AuthType
-	DefaultAccount   bool
-	Region           string
-	IAMAccountID     string
-	UserID           string `json:"-"` // Do not trace
-	Credential       string `json:"-"` // Do not trace
+	AuthType       AuthType
+	DefaultAccount bool
+	Region         string
+	IAMAccountID   string
+	UserID         string `json:"-"` // Do not trace
+	Credential     string `json:"-"` // Do not trace
 }

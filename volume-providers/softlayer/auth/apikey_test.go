@@ -18,18 +18,28 @@ import (
 	"github.com/arahamad/ibmcloud-storage-volume-lib/config"
 
 	"github.com/arahamad/ibmcloud-storage-volume-lib/lib/provider"
+	"go.uber.org/zap"
 )
 
-func Test_ForDefaultAccount(t *testing.T) {
+var (
+	logger *zap.Logger
+)
+
+func init() {
+	logger, _ = zap.NewDevelopment()
+}
+
+/*func Test_ForDefaultAccount(t *testing.T) {
+	logger := zap.NewNop()
 	username := "user1"
 	apiKey := "abcdefg"
 	endpointURL := "http://myEndpointUrl"
 
 	ccf := &contextCredentialsFactory{
 		softlayerConfig: &config.SoftlayerConfig{
-			SoftlayerDefaultUsername: username,
-			SoftlayerDefaultAPIKey:   apiKey,
-			SoftlayerEndpointURL:     endpointURL,
+			SoftlayerUsername:    username,
+			SoftlayerAPIKey:      apiKey,
+			SoftlayerEndpointURL: endpointURL,
 		},
 	}
 
@@ -43,7 +53,7 @@ func Test_ForDefaultAccount(t *testing.T) {
 		UserID:         username,
 		Credential:     apiKey,
 	}, contextCredentials)
-}
+}*/
 
 func Test_ForIaaSAPIKey(t *testing.T) {
 	account := "account1"
@@ -57,7 +67,7 @@ func Test_ForIaaSAPIKey(t *testing.T) {
 		},
 	}
 
-	contextCredentials, err := ccf.ForIaaSAPIKey(account, username, apiKey, logger)
+	contextCredentials, err := ccf.ForIaaSAPIKey(account, username, apiKey, *logger)
 
 	assert.NoError(t, err)
 

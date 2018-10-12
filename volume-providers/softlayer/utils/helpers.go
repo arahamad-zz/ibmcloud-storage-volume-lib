@@ -11,9 +11,9 @@ package utils
 
 import (
 	"fmt"
-	"github.com/uber-go/zap"
-	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/backend"
 
+	"github.com/arahamad/ibmcloud-storage-volume-lib/volume-providers/softlayer/backend"
+	"go.uber.org/zap"
 )
 
 func GetStorageID(sess backend.Session, orderID int, logger zap.Logger) (int, error) {
@@ -21,13 +21,13 @@ func GetStorageID(sess backend.Session, orderID int, logger zap.Logger) (int, er
 	// bool is for retry termination before exhausting max attempt and error is for final issue in retry
 	var storageID int
 	getStorageIDTempFun := func() (bool, error) {
-			id, err := GetNetworkStorageIDFromOrderID(sess, orderID, logger)
-			if err != nil || id <= 0 {
-				return false, err
-			}
-			storageID = id
-			return true, nil
+		id, err := GetNetworkStorageIDFromOrderID(sess, orderID, logger)
+		if err != nil || id <= 0 {
+			return false, err
 		}
+		storageID = id
+		return true, nil
+	}
 
 	// Step 2- Calling retry method
 	if err := ProvisioningRetry(getStorageIDTempFun); err != nil {
