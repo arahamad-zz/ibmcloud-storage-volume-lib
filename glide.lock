@@ -1,12 +1,12 @@
-hash: 6c15eec53c8642d1c15c901c1601576c368f3079ace4cfe9eb887cb0dbbedc18
-updated: 2018-10-12T09:36:46.703491+05:30
+hash: c97d5199b1c87df1557ea879cc5e107ed6c1d8d0954532f94d24fbcc67dc08df
+updated: 2018-10-12T15:17:38.450696278-07:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 - name: github.com/dgrijalva/jwt-go
-  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
+  version: 3af4c746e1c248ee8491a3e0c6f7a9cd831e95f8
 - name: github.com/IBM-Bluemix/bluemix-cli-sdk
-  version: 2d0189e29a05e6a040f3dfacf00abef66771e670
+  version: 9bc09cc35ace8ecdd3411ddcd3757c23a04717bd
   subpackages:
   - common/rest
 - name: github.com/renier/xmlrpc
@@ -22,17 +22,18 @@ imports:
   - sl
 - name: go.uber.org/atomic
   version: 1ea20fb1cbb1cc08cbd0d913a96dead89aa18289
+- name: go.uber.org/multierr
+  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: a2773be06b9ac7c318a3a105b5c310af5730c6b4
+  version: eeedf312bc6c57391d84767a4cd413f02a917974
   subpackages:
   - buffer
   - internal/bufferpool
   - internal/color
   - internal/exit
-  - internal/multierror
   - zapcore
 - name: golang.org/x/text
-  version: b19bf474d317b857955b12035d2c5acb57ce8b01
+  version: 4d1c5fb19474adfe9562c9847ba425e7da817e81
   subpackages:
   - encoding
   - encoding/charmap
@@ -41,18 +42,18 @@ imports:
   - transform
 testImports:
 - name: github.com/davecgh/go-spew
-  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  version: d8f796af33cc11cb798c1aaeb27a4ebc5099927d
   subpackages:
   - spew
 - name: github.com/onsi/ginkgo
-  version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
+  version: 2445fc1ddb3b4d9738f16af50182d47878701cc3
 - name: github.com/onsi/gomega
-  version: a78ae492d53aad5a7a232d0d0462c14c400e3ee7
+  version: 7615b9433f86a8bdf29709bf288bc4fd0636a369
 - name: github.com/pmezard/go-difflib
-  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: e3a8ff8ce36581f87a15341206f205b1da467059
+  version: 2db35c88b92a1631e987089b5485a95e68bc5d3a
   subpackages:
   - assert
