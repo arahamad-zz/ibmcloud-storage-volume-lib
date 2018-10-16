@@ -56,9 +56,9 @@ func main() {
 	*/
 
 	// Load config file
-	conf := config.ReadConfig("", *logger)
-	if conf == nil {
-		logger.Fatal("Error loading configuration")
+	conf, errConf := config.ReadConfig("", *logger)
+	if conf == nil || errConf != nil {
+		logger.Fatal("Error loading configuration", zap.Error(errConf))
 	}
 
 	// Prepare provider registry
